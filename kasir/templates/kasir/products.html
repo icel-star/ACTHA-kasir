@@ -1,0 +1,54 @@
+{% extends 'kasir/base.html' %}
+{% block title %}Produk | ACTHA{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">02 / Produk</div></div></div>
+<section class="panel form-panel"><div class="panel-title"><h2>Tambah produk</h2></div><form class="product-form" method="post" action="{% url 'add_product' %}">{% csrf_token %}<div class="form-row"><div><label for="name">Nama produk</label><input id="name" name="name" type="text" maxlength="120" placeholder="Masukkan nama produk" required></div><div><label for="price">Harga (Rp)</label><input id="price" class="price-input" name="price" type="text" inputmode="numeric" placeholder="Masukkan harga" required></div><button class="btn btn-primary" type="submit">Tambah</button></div></form></section>
+<div class="table-wrap"><table><thead><tr><th>Nama produk</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>{% for product in products %}<tr><td class="product-name-cell"><input form="edit-product-{{ product.id }}" class="borderless-input edit-field" name="name" type="text" value="{{ product.name }}" maxlength="120" readonly required></td><td class="money-cell"><input form="edit-product-{{ product.id }}" class="borderless-input price-input edit-field" name="price" type="text" value="{{ product.price|floatformat:0 }}" inputmode="numeric" readonly required></td><td class="actions"><form id="edit-product-{{ product.id }}" class="product-form" method="post" action="{% url 'edit_product' product.id %}">{% csrf_token %}<button class="btn btn-small edit-trigger" type="button">Edit</button></form><button class="btn btn-small btn-danger icon-button delete-trigger" type="button" aria-label="Hapus produk" title="Hapus produk" data-delete-url="{% url 'delete_product' product.id %}" data-product-name="{{ product.name }}">&#128465;</button></td></tr>{% empty %}<tr><td colspan="3" class="muted">Belum ada produk.</td></tr>{% endfor %}</tbody></table></div>
+<div class="modal-backdrop" id="delete-modal" hidden>
+	<div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+		<h2 id="delete-title">Hapus produk?</h2>
+		<p>Apakah kamu yakin ingin menghapus <strong id="delete-product-name"></strong>?</p>
+		<div class="modal-actions"><button class="btn" id="cancel-delete" type="button">Batal</button><form id="delete-form" method="post">{% csrf_token %}<button class="btn btn-danger" type="submit">Ya, hapus produk</button></form></div>
+	</div>
+</div>
+<script>
+const priceInputs = document.querySelectorAll('.price-input');
+const formatPrice = input => {
+	const digits = input.value.replace(/\D/g, '');
+	input.value = digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
+};
+priceInputs.forEach(input => {
+	input.addEventListener('input', () => formatPrice(input));
+	formatPrice(input);
+});
+document.querySelectorAll('.product-form').forEach(form => form.addEventListener('submit', () => {
+	const priceInput = form.elements.namedItem('price');
+	priceInput.value = priceInput.value.replace(/\D/g, '');
+}));
+document.querySelectorAll('.edit-trigger').forEach(button => button.addEventListener('click', event => {
+	if (button.type === 'submit') return;
+	event.preventDefault();
+	const row = button.closest('tr');
+	row.querySelectorAll('.edit-field').forEach(field => field.removeAttribute('readonly'));
+	button.type = 'submit';
+	button.textContent = 'Simpan';
+	button.classList.add('btn-primary');
+	row.querySelector('.edit-field').focus();
+}));
+const deleteModal = document.querySelector('#delete-modal');
+const deleteForm = document.querySelector('#delete-form');
+const closeDeleteModal = () => deleteModal.hidden = true;
+document.querySelectorAll('.delete-trigger').forEach(button => button.addEventListener('click', () => {
+	deleteForm.action = button.dataset.deleteUrl;
+	document.querySelector('#delete-product-name').textContent = button.dataset.productName;
+	deleteModal.hidden = false;
+}));
+document.querySelector('#cancel-delete').addEventListener('click', closeDeleteModal);
+deleteModal.addEventListener('click', event => {
+	if (event.target === deleteModal) closeDeleteModal();
+});
+document.addEventListener('keydown', event => {
+	if (event.key === 'Escape' && !deleteModal.hidden) closeDeleteModal();
+});
+</script>
+{% endblock %}

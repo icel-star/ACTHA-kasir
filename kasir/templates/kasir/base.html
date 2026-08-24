@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ACTHA Kasir{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'kasir/app.css' %}">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'cashier' %}"><span class="brand-mark">A</span><span>ACTHA<br><small>semangat cari dana ke bali !</small></span></a>
+    <nav>
+      <a class="nav-link {% if request.resolver_match.url_name == 'cashier' %}active{% endif %}" href="{% url 'cashier' %}"><span>01</span> Kasir</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}" href="{% url 'products' %}"><span>02</span> Produk</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'sales_history' %}active{% endif %}" href="{% url 'sales_history' %}"><span>03</span> Transaksi</a>
+    </nav>
+    {% if request.session.is_admin %}<form class="admin-access admin-logged-in" method="post" action="{% url 'admin_logout' %}">{% csrf_token %}<span>Admin aktif</span><button type="submit">Keluar admin</button></form>{% else %}<a class="admin-access" href="{% url 'admin_login' %}"><span class="admin-icon">&#128100;</span> Login sebagai admin</a>{% endif %}
+  </aside>
+  {% if messages %}<div class="toast-container" aria-live="polite">{% for message in messages %}<div class="toast {{ message.tags }}" role="status"><span>{{ message }}</span><button class="toast-close" type="button" aria-label="Tutup notifikasi">x</button></div>{% endfor %}</div>{% endif %}
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+  document.querySelectorAll('.toast').forEach(toast => {
+    const dismiss = () => toast.classList.add('toast-hidden');
+    toast.querySelector('.toast-close').addEventListener('click', dismiss);
+    window.setTimeout(dismiss, 4500);
+  });
+  </script>
+</body>
+</html>

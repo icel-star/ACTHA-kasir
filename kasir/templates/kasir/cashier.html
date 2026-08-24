@@ -1,0 +1,67 @@
+{% extends 'kasir/base.html' %}
+{% block title %}Kasir | ACTHA{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">01 / Kasir</div></div></div>
+<form method="post" action="{% url 'create_sale' %}" id="sale-form">
+{% csrf_token %}
+<div class="cashier-grid">
+  <section class="panel product-panel"><div class="panel-title"><h2>Daftar produk</h2><span class="tag">{{ products|length }} produk</span></div>
+    <label class="search-box"><span aria-hidden="true">⌕</span><input id="product-search" type="search" placeholder="Cari produk..." aria-label="Cari produk"><button class="search-clear" id="search-clear" type="button" aria-label="Hapus pencarian" title="Hapus pencarian" hidden>x</button></label>
+    {% if products %}<div class="product-list" id="product-list">{% for product in products %}
+      <article class="product-row" data-product-name="{{ product.name|lower }}"><div><div class="product-name">{{ product.name }}</div><div class="price" data-format-price="{{ product.price }}">Rp {{ product.price|floatformat:0 }}</div></div><div class="quantity-control"><button class="quantity-button minus" type="button" data-action="decrease" data-product-id="{{ product.id }}" aria-label="Kurangi {{ product.name }}">−</button><input class="quantity-input" type="number" name="quantity_{{ product.id }}" value="0" min="0" max="999999" data-product-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" aria-label="Jumlah {{ product.name }}"><button class="quantity-button plus" type="button" data-action="increase" data-product-id="{{ product.id }}" aria-label="Tambah {{ product.name }}">+</button></div></article>
+    {% endfor %}</div><p class="empty-search muted" id="empty-search" hidden>Produk tidak ditemukan.</p>{% else %}<p class="muted">Belum ada produk. Tambahkan produk terlebih dahulu.</p>{% endif %}
+  </section>
+  <aside class="summary" id="checkout-panel"><div class="summary-header"><div><div class="eyebrow" style="color:#e8b8c8">Checkout</div></div><span class="item-count" id="item-count">0 item</span></div><div class="selected-items" id="summary-items"><p class="checkout-empty">Belum ada produk dipilih.</p></div><button class="see-more" id="toggle-items" type="button" hidden>Lihat selengkapnya</button><fieldset class="payment-methods" id="payment-methods" hidden><legend>Metode pembayaran</legend><label><input type="radio" name="payment_method" value="cash" required disabled> Cash</label><label><input type="radio" name="payment_method" value="qr" disabled> QR</label><label><input type="radio" name="payment_method" value="transfer" disabled> Transfer</label></fieldset><div class="summary-total"><span>Total transaksi</span><span id="total">Rp 0</span></div><button class="btn" id="save-sale" type="submit" {% if not products %}disabled{% endif %}>Simpan transaksi</button></aside>
+</div></form>
+<div class="modal-backdrop" id="sale-confirm-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sale-confirm-title">
+    <div class="eyebrow">Konfirmasi checkout</div>
+    <h2 id="sale-confirm-title">Simpan transaksi?</h2>
+    <div class="modal-actions"><button class="btn" id="cancel-sale" type="button">Batal</button><button class="btn btn-primary" id="confirm-sale" type="button">Ya, simpan transaksi</button></div>
+  </div>
+</div>
+<script>
+const inputs = [...document.querySelectorAll('[data-price]')];
+const total = document.querySelector('#total'); const items = document.querySelector('#summary-items');
+const rupiah = value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+const getInput = id => inputs.find(input => input.dataset.productId === String(id));
+document.querySelectorAll('[data-format-price]').forEach(price => { price.textContent = rupiah(Number(price.dataset.formatPrice)); });
+function updateSummary() {
+  let sum = 0; let itemTotal = 0; const selected = inputs.filter(input => Number(input.value) > 0);
+  document.querySelector('#checkout-panel').classList.toggle('has-multiple', selected.length >= 2);
+  const paymentMethods = document.querySelector('#payment-methods');
+  paymentMethods.hidden = !selected.length;
+  paymentMethods.querySelectorAll('input').forEach(input => { input.disabled = !selected.length; });
+  selected.forEach(input => { itemTotal += Number(input.value); sum += Number(input.value) * Number(input.dataset.price); });
+  items.replaceChildren();
+  if (!selected.length) { items.innerHTML = '<p class="checkout-empty">Belum ada produk dipilih.</p>'; }
+  selected.forEach(input => {
+    const line = document.createElement('div'); line.className = 'summary-line';
+    const details = document.createElement('div'); details.className = 'summary-product';
+    const name = document.createElement('strong'); name.textContent = input.dataset.name;
+    const subtotal = document.createElement('small'); subtotal.textContent = rupiah(Number(input.value) * Number(input.dataset.price));
+    details.append(name, subtotal);
+    const control = document.createElement('div'); control.className = 'summary-quantity';
+    const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.dataset.action = 'decrease'; minus.dataset.productId = input.dataset.productId;
+    const quantity = document.createElement('span'); quantity.textContent = input.value;
+    const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.dataset.action = 'increase'; plus.dataset.productId = input.dataset.productId;
+    control.append(minus, quantity, plus); line.append(details, control); items.append(line);
+  });
+  total.textContent = rupiah(sum); document.querySelector('#item-count').textContent = `${itemTotal} item`;
+  const toggle = document.querySelector('#toggle-items'); toggle.hidden = selected.length <= 2; toggle.textContent = items.classList.contains('expanded') ? 'Lihat lebih sedikit' : 'Lihat selengkapnya';
+}
+document.addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (!button) return; const input = getInput(button.dataset.productId); const next = Number(input.value) + (button.dataset.action === 'increase' ? 1 : -1); input.value = Math.max(0, next); updateSummary(); });
+inputs.forEach(input => input.addEventListener('input', () => { input.value = Math.max(0, Number(input.value) || 0); updateSummary(); }));
+document.querySelector('#toggle-items').addEventListener('click', () => { items.classList.toggle('expanded'); updateSummary(); });
+const searchInput = document.querySelector('#product-search'); const searchClear = document.querySelector('#search-clear');
+searchInput.addEventListener('input', event => { const query = event.target.value.trim().toLowerCase(); let visible = 0; searchClear.hidden = !event.target.value; document.querySelectorAll('.product-row').forEach(row => { const match = row.dataset.productName.includes(query); row.hidden = !match; if (match) visible += 1; }); const emptySearch = document.querySelector('#empty-search'); if (emptySearch) emptySearch.hidden = visible > 0; });
+searchClear.addEventListener('click', () => { searchInput.value = ''; searchClear.hidden = true; searchInput.dispatchEvent(new Event('input')); searchInput.focus(); });
+const saleForm = document.querySelector('#sale-form'); const saleModal = document.querySelector('#sale-confirm-modal'); let saleConfirmed = false;
+saleForm.addEventListener('submit', event => { if (!saleConfirmed) { event.preventDefault(); saleModal.hidden = false; } });
+document.querySelector('#cancel-sale').addEventListener('click', () => { saleModal.hidden = true; });
+document.querySelector('#confirm-sale').addEventListener('click', () => { saleConfirmed = true; saleForm.requestSubmit(); });
+saleModal.addEventListener('click', event => { if (event.target === saleModal) saleModal.hidden = true; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !saleModal.hidden) saleModal.hidden = true; });
+updateSummary();
+</script>
+{% endblock %}

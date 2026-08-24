@@ -1,0 +1,5 @@
+{% extends 'kasir/base.html' %}
+{% block title %}Login Admin | ACTHA{% endblock %}
+{% block content %}
+<div class="login-page"><section class="panel login-panel"><h1>Login admin</h1><form method="post">{% csrf_token %}<div class="login-field"><label for="username">Username</label><input class="auth-input" id="username" name="username" type="text" autocomplete="username" placeholder="Masukkan username" required></div><div class="login-field"><label for="password">Password</label><input class="auth-input" id="password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required></div><button class="btn btn-primary" type="submit">Login</button></form></section></div>
+{% endblock %}
