@@ -12,7 +12,7 @@ nav { margin-top:70px; display:grid; gap:10px; }
 .nav-link:hover,.nav-link.active { color:#fff; border-color:var(--lime); background:rgba(255,255,255,.07); }
 .sidebar-note { margin-top:auto; color:#ddb0c1; font-size:10px; line-height:1.8; letter-spacing:.1em; } .sidebar-note strong { color:var(--lime); }
 .main-content { margin-left:250px; min-height:100vh; padding:58px 7vw 190px; max-width:1500px; }
-.admin-access { position:static; display:flex; align-items:center; gap:7px; width:100%; margin-top:auto; padding:9px 12px; border:1px solid rgba(142,61,93,.25); border-radius:7px; background:rgba(247,182,200,.78); color:#713047; text-decoration:none; font:600 11px 'DM Sans'; box-shadow:0 8px 20px rgba(142,61,93,.12); }
+.admin-access { position:static; display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-top:auto; padding:9px 12px; border:1px solid rgba(142,61,93,.25); border-radius:7px; background:rgba(247,182,200,.78); color:#713047; text-decoration:none; font:600 11px 'DM Sans'; text-align:center; box-shadow:0 8px 20px rgba(142,61,93,.12); }
 .admin-access:hover { background:#f7b6c8; }
 .admin-icon { font-size:14px; }
 .admin-logged-in { cursor:default; }
