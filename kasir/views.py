@@ -1,3 +1,6 @@
+from django.http import HttpResponse
+import openpyxl
+from django.utils.timezone import localtime
 from decimal import Decimal, InvalidOperation
 from secrets import compare_digest
 
@@ -229,3 +232,40 @@ def delete_transaction(request, sale_id):
     sale.save(update_fields=['payment_method', 'deleted_at'])
     messages.success(request, f'Transaksi #{sale.id} berhasil dibatalkan.')
     return redirect('sales_history')
+
+def export_riwayat_excel(request):
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    tanggal_hari_ini = timezone.now().strftime("%d-%m-%Y")
+    response['Content-Disposition'] = f'attachment; filename="Riwayat_Transaksi_ACTHA_{tanggal_hari_ini}.xlsx"'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Riwayat Transaksi"
+
+    headers = ['ID Transaksi', 'Waktu Simpan', 'Metode Pembayaran', 'Status', 'Total (Rp)', 'Detail Produk (Nama - Qty - Subtotal)']
+    ws.append(headers)
+
+    sales = Sale.objects.prefetch_related('items').all()
+    
+    for sale in sales:
+        waktu_lokal = localtime(sale.created_at).strftime("%d/%m/%Y %H:%M:%S")
+        
+        status = "Dibatalkan" if sale.deleted_at else "Sukses"
+    
+        detail_items = []
+        for item in sale.items.all():
+            detail_items.append(f"{item.product_name} ({item.quantity}x) - Rp {item.subtotal:,.0f}")
+        detail_teks = " | ".join(detail_items)
+
+        row = [
+            f"#{sale.id}",
+            waktu_lokal,
+            sale.get_payment_method_display(),
+            status,
+            float(sale.total),
+            detail_teks
+        ]
+        ws.append(row)
+
+    wb.save(response)
+    return response

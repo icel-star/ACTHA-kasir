@@ -15,4 +15,5 @@ urlpatterns = [
     path('riwayat/<int:sale_id>/', views.transaction_detail, name='transaction_detail'),
     path('riwayat/<int:sale_id>/edit/', views.edit_transaction, name='edit_transaction'),
     path('riwayat/<int:sale_id>/hapus/', views.delete_transaction, name='delete_transaction'),
+    path('riwayat/export/', views.export_riwayat_excel, name='export_riwayat_excel'),
 ]
