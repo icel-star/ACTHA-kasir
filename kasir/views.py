@@ -153,7 +153,8 @@ def delete_product(request, product_id):
 
 def sales_history(request):
     sales = Sale.objects.prefetch_related('items').all()
-    return render(request, 'kasir/sales_history.html', {'sales': sales})
+    total_penjualan_sah = sum(sale.total for sale in sales if not sale.deleted_at)
+    return render(request, 'kasir/sales_history.html', {'sales': sales, 'total_penjualan_sah': total_penjualan_sah,})
 
 
 def transaction_detail(request, sale_id):
