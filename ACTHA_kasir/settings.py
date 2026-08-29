@@ -32,11 +32,11 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv(
-    'ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app,actha-kasir-production.up.railway.app'
+    'ALLOWED_HOSTS', 'localhost,127.0.0.1,actha-kasir-production.up.railway.app'
 ).split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() for origin in os.getenv(
-        'CSRF_TRUSTED_ORIGINS', 'https://*.vercel.app,https://actha-kasir-production.up.railway.app'
+        'CSRF_TRUSTED_ORIGINS', 'https://actha-kasir-production.up.railway.app'
     ).split(',') if origin.strip()
 ]
 
